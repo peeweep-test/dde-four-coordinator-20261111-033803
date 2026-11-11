@@ -1,0 +1,55 @@
+name: Current coordinator
+run-name: coordinator ${{ github.event_name }} PR ${{ github.event.pull_request.number }} ${{ inputs.group }} ${{
+  inputs.version }}
+'on':
+  pull_request_target:
+    types:
+    - opened
+    - reopened
+    - synchronize
+    - edited
+    - ready_for_review
+    - closed
+  workflow_dispatch:
+    inputs:
+      group:
+        type: string
+        default: ''
+      version:
+        type: string
+        default: ''
+      dry_run:
+        type: boolean
+        default: true
+permissions:
+  contents: write
+  pull-requests: write
+  statuses: write
+  actions: read
+jobs:
+  coordinate:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: baseline-controller
+      cancel-in-progress: false
+      queue: max
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        ref: master
+        persist-credentials: false
+    - name: Verify frozen sources
+      run: python3 lab/verify-snapshot.py
+    - name: Install deps
+      run: pip install --quiet pyyaml
+    - name: Execute current coordinator
+      id: coordinate
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GROUP: ${{ inputs.group }}
+        VERSION: ${{ inputs.version }}
+        DRY_RUN: ${{ inputs.dry_run }}
+        MEMBER_BASE: ''
+        DISTRIBUTION: unstable
+        CREATE_PR: 'true'
+      run: python3 lab/coordinator.py
