@@ -1,6 +1,6 @@
 groups:
   G2:
     name: Isolated test group
-    version: 6.0.51
+    version: "6.0.52"
     members:
     - dde-four-member-20261111-033803
